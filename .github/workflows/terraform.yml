@@ -28,7 +28,7 @@ jobs:
         GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
 
     - name: Terraform Plan
-      run: terraform plan -var="project_id=$PROJECT_ID"
+      run: terraform plan -var="project_id=intense-acumen-468006-i0"
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main'
