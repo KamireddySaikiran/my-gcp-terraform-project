@@ -1,25 +1,24 @@
+provider "google" {
+  project = "your-project-id"
+  region  = "us-central1"
+}
+
 resource "google_container_cluster" "primary" {
-  name     = var.cluster_name
-  location = var.region
+  name     = "test-gke-cluster"
+  location = "us-central1"
 
   remove_default_node_pool = true
   initial_node_count       = 1
-
-  node_config {
-    machine_type = "e2-medium"
-  }
 }
 
 resource "google_container_node_pool" "primary_nodes" {
-  name       = "${var.cluster_name}-nodes"
+  name       = "test-node-pool"
+  location   = "us-central1"
   cluster    = google_container_cluster.primary.name
-  location   = var.region
   node_count = 1
 
   node_config {
-    machine_type = "e2-medium"
-    oauth_scopes = [
-      "https://www.googleapis.com/auth/cloud-platform"
-    ]
+    preemptible  = true
+    machine_type = "e2-small"
   }
 }
