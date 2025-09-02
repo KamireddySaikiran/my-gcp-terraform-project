@@ -6,12 +6,16 @@ on:
   pull_request:
 
 env:
-  PROJECT_ID: "your-project-id"
+  PROJECT_ID: "intense-acumen-468006-i0"
+  REGION: "us-central1"
 
 jobs:
   terraform:
     name: 'Terraform'
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
 
     steps:
     - name: Checkout
@@ -19,19 +23,23 @@ jobs:
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
+
+    - name: Setup Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0
       with:
-        terraform_version: 1.1.9
+        project_id: ${{ env.PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_CREDENTIALS }}
+        export_default_credentials: true
 
     - name: Terraform Init
       run: terraform init
-      env:
-        GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+
+    - name: Terraform Validate
+      run: terraform validate
 
     - name: Terraform Plan
-      run: terraform plan -var="project_id=intense-acumen-468006-i0"
+      run: terraform plan -var="project_id=$PROJECT_ID" -var="region=$REGION"
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main'
-      run: terraform apply -auto-approve -var="project_id=$PROJECT_ID"
-      env:
-        GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+      run: terraform apply -auto-approve -var="project_id=$PROJECT_ID" -var="region=$REGION"
