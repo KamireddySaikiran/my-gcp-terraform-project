@@ -1,45 +1,19 @@
-name: 'Terraform'
-
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-
-env:
-  PROJECT_ID: "intense-acumen-468006-i0"
-  REGION: "us-central1"
-
-jobs:
-  terraform:
-    name: 'Terraform'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-
-    - name: Setup Google Cloud SDK
-      uses: google-github-actions/setup-gcloud@v0
-      with:
-        project_id: ${{ env.PROJECT_ID }}
-        service_account_key: ${{ secrets.GCP_CREDENTIALS }}
-        export_default_credentials: true
-
-    - name: Terraform Init
-      run: terraform init
-
-    - name: Terraform Validate
-      run: terraform validate
-
-    - name: Terraform Plan
-      run: terraform plan -var="project_id=$PROJECT_ID" -var="region=$REGION"
-
-    - name: Terraform Apply
-      if: github.ref == 'refs/heads/main'
-      run: terraform apply -auto-approve -var="project_id=$PROJECT_ID" -var="region=$REGION"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello
+  template:
+    metadata:
+      labels:
+        app: hello
+    spec:
+      containers:
+      - name: hello
+        image: nginx
+        ports:
+        - containerPort: 80
