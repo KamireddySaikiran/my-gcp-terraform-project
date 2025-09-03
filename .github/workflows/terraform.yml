@@ -1,43 +1,33 @@
-name: Deploy to GKE
+name: Terraform Deploy
 
-on: [push]
+on:
+  push:
+    branches: [ main ]
 
 jobs:
-  terraform:
-    runs-on: self-hosted   # GitHub Runner VM
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-
-      - name: Auth to GCP
-        uses: 'google-github-actions/auth@v1'
-        with:
-        credentials_json: '${{ secrets.GCP_SA_KEY }}'
-
-      - name: Terraform Apply
-        run: |
-          cd infra
-          terraform init
-          terraform apply -auto-approve \
-            -var="project_id=${{ secrets.GCP_PROJECT }}" \
-            -var="region=${{ secrets.GCP_REGION }}" \
-            -var="credentials_file=../key.json"
-
   deploy-app:
-    needs: terraform
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+    environment: production
+    
     steps:
-      - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Get GKE Credentials
-        run: |
-          echo "${{ secrets.GCP_KEY }}" > key.json
-          gcloud auth activate-service-account --key-file=key.json
-          gcloud container clusters get-credentials demo-gke --region ${{ secrets.GCP_REGION }} --project ${{ secrets.GCP_PROJECT }}
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.0
 
-      - name: Deploy App
-        run: |
-          kubectl apply -f k8s/deployment.yaml
-          kubectl apply -f k8s/service.yaml
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+        
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+
+    - name: Terraform Init
+      run: terraform init
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve
