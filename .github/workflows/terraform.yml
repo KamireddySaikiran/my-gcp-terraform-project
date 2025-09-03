@@ -38,7 +38,7 @@ jobs:
       run: terraform validate
 
     - name: Terraform Plan
-      run: terraform plan -var="project_id=$PROJECT_ID" -var="region=$REGION"
+      run: terraform plan -var="project_id=$PROJECT_ID" -var="region=$REGION" -var="credentials_file=$GOOGLE_APPLICATION_CREDENTIALS"
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main'
