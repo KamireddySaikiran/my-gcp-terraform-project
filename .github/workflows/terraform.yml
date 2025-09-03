@@ -7,7 +7,7 @@ on:
 
 env:
   PROJECT_ID: "intense-acumen-468006-i0"
-  REGION: "us-central1"
+  REGION: "us-west1"
 
 jobs:
   terraform:
