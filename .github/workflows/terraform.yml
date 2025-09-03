@@ -1,19 +1,43 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: hello-app
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: hello
-  template:
-    metadata:
-      labels:
-        app: hello
-    spec:
-      containers:
-      - name: hello
-        image: nginx
-        ports:
-        - containerPort: 80
+name: Deploy to GKE
+
+on: [push]
+
+jobs:
+  terraform:
+    runs-on: self-hosted   # GitHub Runner VM
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Auth to GCP
+        run: |
+          echo "${{ secrets.GCP_KEY }}" > key.json
+          gcloud auth activate-service-account --key-file=key.json
+
+      - name: Terraform Apply
+        run: |
+          cd infra
+          terraform init
+          terraform apply -auto-approve \
+            -var="project_id=${{ secrets.GCP_PROJECT }}" \
+            -var="region=${{ secrets.GCP_REGION }}" \
+            -var="credentials_file=../key.json"
+
+  deploy-app:
+    needs: terraform
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get GKE Credentials
+        run: |
+          echo "${{ secrets.GCP_KEY }}" > key.json
+          gcloud auth activate-service-account --key-file=key.json
+          gcloud container clusters get-credentials demo-gke --region ${{ secrets.GCP_REGION }} --project ${{ secrets.GCP_PROJECT }}
+
+      - name: Deploy App
+        run: |
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
