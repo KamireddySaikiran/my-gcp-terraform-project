@@ -21,18 +21,3 @@ resource "google_container_node_pool" "primary_nodes" {
     ]
   }
 }
-resource "google_container_node_pool" "primary_nodes" {
-  name       = "test-node-pool"
-  location   = var.region
-  cluster    = google_container_cluster.primary.name
-  node_count = 1
-
-  # Add explicit dependency
-  depends_on = [google_container_cluster.primary]
-
-  node_config {
-    preemptible  = true
-    machine_type = "e2-small"
-    # ... rest of config
-  }
-}
