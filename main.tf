@@ -6,6 +6,6 @@ provider "google" {
 
 resource "google_container_cluster" "primary" {
   name     = "my-gke-cluster"
-  location = "us-central1"
+  location = "us-west1"
   initial_node_count = 2
 }
