@@ -7,5 +7,9 @@ provider "google" {
 resource "google_container_cluster" "primary" {
   name     = "my-gke-cluster"
   location = "us-west1"
-  initial_node_count = 2
+  node_config {
+     disk_size_gb = 50
+  }
+   initial_node_count = 3
+
 }
