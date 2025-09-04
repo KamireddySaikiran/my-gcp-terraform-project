@@ -1,6 +1,6 @@
 provider "google" {
   project = var.project_id
-  region  = "us-central1"
+  region  = "us-west1"
   credentials = file(var.credentials_file)
 }
 
