@@ -8,7 +8,7 @@ resource "google_container_cluster" "primary" {
   name     = "my-gke-cluster"
   location = "us-west1"
   node_config {
-     disk_size_gb = 10
+     disk_size_gb = 13
   }
    initial_node_count = 1
 
