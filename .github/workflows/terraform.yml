@@ -1,51 +1,45 @@
-name: GKE CI/CD Pipeline
+name: 'Terraform'
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: [ "main" ]
+  pull_request:
 
 env:
-  TF_VERSION: "1.5.0"
-  GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
-  GCP_REGION: ${{ secrets.GCP_REGION }}
-  GCP_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
+  PROJECT_ID: "intense-acumen-468006-i0"
+  REGION: "us-central1"
 
 jobs:
-
   terraform:
-    runs-on: self-hosted
-    outputs:
-      cluster_name: ${{ steps.get_cluster_name.outputs.cluster_name }}
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v3
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
 
-      - name: Configure GCP credentials
-        run: |
-          printf "%s" "${GCP_SA_KEY}" > $HOME/gcp-key.json
-          gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
-          gcloud config set project $GCP_PROJECT
-          gcloud config set compute/region $GCP_REGION
-          gcloud config set compute/zone ${GCP_REGION}-a
+    - name: Setup Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0
+      with:
+        project_id: ${{ env.PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_CREDENTIALS }}
+        export_default_credentials: true
 
-      - name: Terraform Init
-        run: terraform -chdir=terraform init
+    - name: Terraform Init
+      run: terraform init
 
-      - name: Terraform Apply
-        run: terraform -chdir=terraform apply -auto-approve -var="project_id=${GCP_PROJECT}" -var="region=${GCP_REGION}" -var="credentials_file=$HOME/gcp-key.json"
+    - name: Terraform Validate
+      run: terraform validate
 
-      - name: Get Cluster Name
-        id: get_cluster_name
-        run: |
-          echo "Fetching cluster name..."
-          terraform -chdir=terraform output -raw cluster_name > cluster_name.txt
-          CLUSTER_NAME=$(cat cluster_name.txt)
-          echo "cluster_name=${CLUSTER_NAME}" >> $GITHUB_OUTPUT
+    - name: Terraform Plan
+      run: terraform plan -var="project_id=$PROJECT_ID" -var="region=$REGION" -var="credentials_file=$GOOGLE_APPLICATION_CREDENTIALS"
+
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main'
+      run: terraform apply -auto-approve -var="project_id=$PROJECT_ID" -var="region=$REGION"
